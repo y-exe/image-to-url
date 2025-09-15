@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画像あぷろだ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body{font-family:'Zen Maru Gothic',sans-serif;background-color:#f6f6f6;color:#333;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;padding:20px;box-sizing:border-box}.container{background-color:white;padding:40px 50px;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.05);text-align:center;width:100%;max-width:500px}h1{margin-top:0;margin-bottom:15px;font-weight:700;font-size:2em}.description{font-size:.9em;color:#666;line-height:1.6;margin-bottom:30px}#file-input{display:none}#upload-area{display:block;border:2px solid #000;background-color:#fff;color:#000;border-radius:999px;padding:18px 20px;cursor:pointer;transition:all .2s ease;font-size:1.1em;font-weight:500}#upload-area:hover{background-color:#000;color:#fff}.separator{display:flex;align-items:center;text-align:center;margin:30px 0;color:#ccc}.separator hr{flex-grow:1;border:none;border-top:1px solid #eee;margin:0}.separator span{padding:0 15px;font-size:.9em;font-weight:500;letter-spacing:.1em}.api-docs summary{display:block;list-style:none;border:2px solid #000;background-color:#000;color:#fff;border-radius:999px;padding:14px 20px;cursor:pointer;transition:opacity .2s ease;font-size:1em;font-weight:500}.api-docs summary:hover{opacity:.8}.api-docs summary::-webkit-details-marker{display:none}.api-docs>div{margin-top:20px;text-align:left}.api-docs pre{background-color:#2d2d2d;color:#ccc;padding:15px;border-radius:8px;white-space:pre-wrap;word-wrap:break-word;font-family:'Courier New',Courier,monospace}#result-area{text-align:left;margin-top:30px;opacity:0;transition:opacity .5s ease,max-height .5s ease;max-height:0;overflow:hidden}#result-area.visible{opacity:1;max-height:300px}.url-box{background-color:#f0f0f0;padding:10px 15px;border-radius:8px;margin-bottom:15px;display:flex;justify-content:space-between;align-items:center}.url-box input{flex-grow:1;border:none;background:none;font-size:1em;padding-right:10px}.copy-btn{padding:8px 15px;border:none;background-color:#333;color:white;border-radius:8px;cursor:pointer;transition:background-color .2s ease;flex-shrink:0}.copy-btn:hover{background-color:#555}#status{font-weight:500;transition:margin-top .4s ease}#status:empty{margin-top:0;min-height:0}#status:not(:empty){margin-top:20px;min-height:1.2em}footer{margin-top:40px;color:#aaa;font-size:.8em}@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.fade-in-up{opacity:0;animation:fadeInUp .6s ease-out forwards;animation-delay:calc(var(--order) * .1s)}.mobile-only{display:inline}.desktop-only{display:none}@media (min-width:500px){.mobile-only{display:none}.desktop-only{display:inline}}
+        @media (max-width: 500px) {
+            .container { padding: 30px 20px; }
+            .url-box {
+                flex-direction: column;
+                padding: 15px;
+            }
+            .url-box input {
+                width: 100%;
+                padding-right: 0;
+                margin-bottom: 10px;
+                text-align: center;
+                font-size: 0.9em;
+            }
+            .copy-btn {
+                width: 100%;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="fade-in-up" style="--order: 0;">画像あぷろだ</h1>
+        <p class="description fade-in-up" style="--order: 1;">
+            アップロードすることで画像をURL化することができます。<br>何日かでURLが失効する可能性があるため掲示板などの一時的な利用を推奨します。
+        </p>
+        <label for="file-input" id="upload-area" class="fade-in-up" style="--order: 2;">
+            <span class="mobile-only">アップロード</span>
+            <span class="desktop-only">クリック または ドラッグ＆ドロップ</span>
+        </label>
+        <input type="file" id="file-input" accept="image/*">
+        <div id="status"></div>
+        <div id="result-area">
+            <div class="url-box">
+                <input type="text" id="image-url" readonly>
+                <button class="copy-btn" onclick="copyUrl('image-url')">コピー</button>
+            </div>
+        </div>
+        <div class="separator fade-in-up" style="--order: 3;"><hr><span>API</span><hr></div>
+        <details class="api-docs fade-in-up" style="--order: 4;">
+            <summary>APIドキュメント</summary>
+            <div>
+                <p>このサービスは公開APIを提供しています。以下のエンドポイントに multipart/form-data 形式で画像をPOSTすることで利用できます。</p>
+                <h4>エンドポイント</h4><pre><code>POST https://pic.yexe.xyz/upload</code></pre>
+                <h4>リクエスト (cURLの例)</h4><pre><code>curl -X POST https://pic.yexe.xyz/upload \
+-F "image=@/path/to/image.jpg"</code></pre>
+            </div>
+        </details>
+        <footer class="fade-in-up" style="--order: 5;">© yexe.net yexe.xyz 2025</footer>
+    </div>
+    <script>
+        const uploadArea=document.getElementById("upload-area"),fileInput=document.getElementById("file-input"),resultArea=document.getElementById("result-area"),imageUrlInput=document.getElementById("image-url"),statusDiv=document.getElementById("status"),API_ENDPOINT="/upload";["dragenter","dragover","dragleave","drop"].forEach(e=>{uploadArea.addEventListener(e,preventDefaults,!1)});function preventDefaults(e){e.preventDefault(),e.stopPropagation()}uploadArea.addEventListener("drop",e=>{handleFiles(e.dataTransfer.files)},!1),fileInput.addEventListener("change",e=>{handleFiles(e.target.files)});async function handleFiles(e){if(0!==e.length){const t=e[0];statusDiv.textContent="アップロード中...",resultArea.classList.remove("visible");const o=new FormData;o.append("image",t);try{const e=await fetch(API_ENDPOINT,{method:"POST",body:o}),t=await e.json();if(!t.success)throw new Error(t.error||"不明なエラーが発生しました");imageUrlInput.value=t.url,resultArea.classList.add("visible"),statusDiv.textContent="アップロード完了！"}catch(e){statusDiv.textContent=`エラー: ${e.message}`}}}function copyUrl(e){const t=document.getElementById(e);t.select(),t.setSelectionRange(0,99999);try{document.execCommand("copy")}catch(e){console.error("Copy failed",e)}statusDiv.textContent="コピーしました！"}
+    </script>
+</body>
+</html>
