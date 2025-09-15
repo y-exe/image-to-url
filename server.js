@@ -49,7 +49,11 @@ app.post('/upload', upload.single('image'), async (req, res) => {
         const shortId = encodeToBase62(BigInt(message.id));
         const newProxyUrl = `https://pic.yexe.xyz/${shortId}`;
         
-        res.status(200).json({ success: true, url: newProxyUrl });
+        res.status(200).json({ 
+            success: true, 
+            url: newProxyUrl, 
+            fileName: req.file.originalname
+        });
 
     } catch (error) {
         console.error(`[Upload] アップロードエラー: ${error.message}`);
@@ -99,10 +103,10 @@ const client = new Client({
     partials: [Partials.Channel]
 });
 client.login(process.env.DISCORD_BOT_TOKEN);
-client.once('ready', () => console.log(` [${client.user.tag}] としてDiscordにログインしました。`));
+client.once('ready', () => console.log(`✅ Discord Bot [${client.user.tag}] としてログインしました。`));
 
 const PORT = 3000;
 app.listen(PORT, () => {
-    console.log(` ${PORT} で起動しました。`);
-    console.log(`   URL: http://localhost:${PORT}`);
+    console.log(`✅ 完全自己完結型サーバーがポート ${PORT} で起動しました。`);
+    console.log(`   テスト用URL: http://localhost:${PORT}`);
 });
