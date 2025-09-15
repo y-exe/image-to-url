@@ -99,10 +99,10 @@ const client = new Client({
     partials: [Partials.Channel]
 });
 client.login(process.env.DISCORD_BOT_TOKEN);
-client.once('ready', () => console.log(`✅ Discord Bot [${client.user.tag}] としてログインしました。`));
+client.once('ready', () => console.log(` [${client.user.tag}] としてDiscordにログインしました。`));
 
 const PORT = 3000;
 app.listen(PORT, () => {
-    console.log(`✅ 完全自己完結型サーバーがポート ${PORT} で起動しました。`);
-    console.log(`   テスト用URL: http://localhost:${PORT}`);
+    console.log(` ${PORT} で起動しました。`);
+    console.log(`   URL: http://localhost:${PORT}`);
 });
