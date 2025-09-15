@@ -16,14 +16,11 @@
     <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body{font-family:'Zen Maru Gothic',sans-serif;background-color:#f6f6f6;color:#333;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;padding:20px;box-sizing:border-box}.container{background-color:white;padding:40px 50px;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.05);text-align:center;width:100%;max-width:500px}h1{margin-top:0;margin-bottom:15px;font-weight:700;font-size:2em}.description{font-size:.9em;color:#666;line-height:1.6;margin-bottom:30px}#file-input{display:none}#upload-area{display:block;border:2px solid #000;background-color:#fff;color:#000;border-radius:999px;padding:18px 20px;cursor:pointer;transition:all .2s ease;font-size:1.1em;font-weight:500}#upload-area:hover{background-color:#000;color:#fff}#status{font-weight:500;transition:margin-top .4s ease;margin-top:20px;min-height:1.2em}#status:empty{margin-top:0;min-height:0}footer{margin-top:40px;color:#aaa;font-size:.8em}@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.fade-in-up{opacity:0;animation:fadeInUp .6s ease-out forwards;animation-delay:calc(var(--order) * .1s)}
+        body{font-family:'Zen Maru Gothic',sans-serif;background-color:#f6f6f6;color:#333;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;padding:20px;box-sizing:border-box}
+        .container{background-color:white;padding:40px 50px;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.05);text-align:center;width:100%;max-width:500px}h1{margin-top:0;margin-bottom:15px;font-weight:700;font-size:2em}.description{font-size:.9em;color:#666;line-height:1.6;margin-bottom:30px}#file-input{display:none}#upload-area{display:block;border:2px solid #000;background-color:#fff;color:#000;border-radius:999px;padding:18px 20px;cursor:pointer;transition:all .2s ease;font-size:1.1em;font-weight:500}#upload-area:hover{background-color:#000;color:#fff}#status{font-weight:500;transition:margin-top .4s ease;margin-top:20px;min-height:1.2em}#status:empty{margin-top:0;min-height:0}footer{margin-top:40px;color:#aaa;font-size:.8em}@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}.fade-in-up{opacity:0;animation:fadeInUp .6s ease-out forwards;animation-delay:calc(var(--order) * .1s)}
         
         .history-section { margin-top: 30px; }
-        #history-container { 
-            display: flex; 
-            flex-direction: column-reverse; 
-            gap: 15px; 
-        }
+        #history-container { display: flex; flex-direction: column-reverse; gap: 15px; }
         .history-item { background: #f9f9f9; border-radius: 12px; padding: 15px; text-align: left; animation: fadeInUp .5s ease-out; }
         .history-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .file-name { font-weight: 500; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 10px; }
@@ -40,8 +37,18 @@
             .mobile-only{display:none}
             .desktop-only{display:inline}
         }
+
         @media (max-width: 500px) {
-            .container { padding: 30px 20px; }
+            body { 
+                background-color: #fff;
+                padding: 0; 
+            }
+            .container { 
+                box-shadow: none; 
+                border-radius: 0; 
+                padding: 30px 15px; 
+                min-height: 100vh; 
+            }
             .url-box { flex-direction: column; padding: 15px; }
             .url-box input { width: 100%; padding-right: 0; margin-bottom: 10px; text-align: center; font-size: 0.9em; }
             .copy-btn { width: 100%; padding: 12px; }
