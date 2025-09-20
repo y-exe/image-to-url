@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const multer = require('multer');
-const { Client, GatewayIntentBits, Partials } = require('discord.js');
+const { Client, GatewayIntentBits, Partials, Events } = require('discord.js');
 const cors = require('cors');
 const puppeteer = require('puppeteer');
 const NodeCache = require('node-cache');
@@ -40,20 +40,19 @@ app.post('/upload', upload.single('image'), async (req, res) => {
 
 app.get('/:shortId', async (req, res) => {
     const { shortId } = req.params;
-    
     const cachedImage = imageCache.get(shortId);
     if (cachedImage) {
         res.setHeader('Content-Type', cachedImage.contentType);
         return res.send(cachedImage.buffer);
     }
-
     let browser = null;
     try {
         const messageId = decodeFromBase62(shortId).toString();
         if (!/^\d+$/.test(messageId)) { return res.status(400).send('無効なID形式です。'); }
-
         const channel = await client.channels.fetch(process.env.DISCORD_CHANNEL_ID);
-        const message = await channel.messages.fetch(messageId);
+        
+        const message = await channel.messages.fetch({ message: messageId, force: true });
+        
         const attachment = message.attachments.first();
         if (!attachment) { throw new Error('添付ファイルが見つかりません。'); }
 
@@ -61,18 +60,13 @@ app.get('/:shortId', async (req, res) => {
         browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
         const page = await browser.newPage();
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36');
-        
         const response = await page.goto(discordCdnUrl, { waitUntil: 'networkidle0' });
         if (!response.ok()) { throw new Error(`画像データの取得に失敗しました: ${response.status()}`); }
-        
         const imageBuffer = await response.buffer();
         const contentType = response.headers()['content-type'];
-
         imageCache.set(shortId, { buffer: imageBuffer, contentType: contentType });
-
         res.setHeader('Content-Type', contentType);
         res.send(imageBuffer);
-
     } catch (error) {
         console.error(`[Proxy] プロキシエラー: shortId='${shortId}' - ${error.message}`);
         if (error.code === 10008) {
@@ -90,7 +84,9 @@ const client = new Client({
     partials: [Partials.Channel]
 });
 client.login(process.env.DISCORD_BOT_TOKEN);
-client.once('ready', () => console.log(` [${client.user.tag}] としてログイン`));
+client.once(Events.ClientReady, () => {
+    console.log(`[${client.user.tag}] としてログイン。`);
+});
 
 const PORT = 3000;
 app.listen(PORT, () => {
