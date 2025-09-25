@@ -102,8 +102,7 @@
         
         const API_ENDPOINT = `${API_BASE_URL}/upload`;
         const HISTORY_KEY = "imageUploadHistory";
-        const MAX_FILE_SIZE = 8 * 1024 * 1024; 
-
+        const MAX_FILE_SIZE = 8 * 1024 * 1024;
         document.getElementById('api-endpoint-display').textContent = `POST ${API_ENDPOINT}`;
         document.getElementById('api-curl-display').textContent = `curl -X POST ${API_ENDPOINT} \\\n-F "image=@/path/to/image.jpg"`;
 
@@ -137,45 +136,31 @@
         const uploadFileWithProgress = (file) => {
             const formData = new FormData();
             formData.append("image", file);
-            
             const xhr = new XMLHttpRequest();
-
             xhr.upload.addEventListener("progress", (event) => {
                 if (event.lengthComputable) {
-                    const loaded = formatBytes(event.loaded);
-                    const total = formatBytes(event.total);
-                    statusDiv.textContent = `アップロード中... (${loaded} / ${total})`;
+                    statusDiv.textContent = `アップロード中... (${formatBytes(event.loaded)} / ${formatBytes(event.total)})`;
                 }
             });
-
             xhr.addEventListener("load", () => {
                 if (xhr.status >= 200 && xhr.status < 300) {
                     try {
                         const data = JSON.parse(xhr.responseText);
                         if (!data.success) throw new Error(data.error || "不明なエラーが発生しました");
-
                         const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
                         history.push({ url: data.url, fileName: data.fileName });
                         localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
                         statusDiv.textContent = "アップロード完了！";
                         renderHistory();
-                    } catch (error) {
-                         statusDiv.textContent = `エラー: レスポンスの解析に失敗しました。`;
-                    }
+                    } catch (error) { statusDiv.textContent = `エラー: レスポンスの解析に失敗しました。`; }
                 } else {
                     try {
                          const errorData = JSON.parse(xhr.responseText);
                          statusDiv.textContent = `エラー: ${errorData.error || xhr.statusText}`;
-                    } catch {
-                         statusDiv.textContent = `エラー: ${xhr.status} ${xhr.statusText}`;
-                    }
+                    } catch { statusDiv.textContent = `エラー: ${xhr.status} ${xhr.statusText}`; }
                 }
             });
-
-            xhr.addEventListener("error", () => {
-                statusDiv.textContent = "エラー: ネットワークエラーが発生しました。";
-            });
-
+            xhr.addEventListener("error", () => { statusDiv.textContent = "エラー: ネットワークエラーが発生しました。"; });
             xhr.open("POST", API_ENDPOINT, true);
             xhr.send(formData);
         }
@@ -183,12 +168,10 @@
         const handleFiles = (files) => {
             if (files.length === 0) return;
             const file = files[0];
-
             if (file.size > MAX_FILE_SIZE) {
                 statusDiv.textContent = `エラー: ファイルサイズが${formatBytes(MAX_FILE_SIZE)}を超えています。`;
                 return;
             }
-
             statusDiv.textContent = "アップロード準備中...";
             uploadFileWithProgress(file);
         };
@@ -196,11 +179,7 @@
         const copyUrl = (elementId) => {
             const input = document.getElementById(elementId);
             if (navigator.clipboard) {
-                navigator.clipboard.writeText(input.value).then(() => {
-                    statusDiv.textContent = "コピーしました！";
-                }, () => {
-                    statusDiv.textContent = "コピーに失敗しました";
-                });
+                navigator.clipboard.writeText(input.value).then(() => { statusDiv.textContent = "コピーしました！"; }, () => { statusDiv.textContent = "コピーに失敗しました"; });
             } else {
                 input.select();
                 document.execCommand("copy");
@@ -235,13 +214,9 @@
             try {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
-                
-                const response = await fetch(API_BASE_URL, { signal: controller.signal });
+                const response = await fetch(API_BASE_URL, { signal: controller.signal, mode: 'cors' });
                 clearTimeout(timeoutId);
-
-                if (!response.ok) {
-                    throw new Error('API server is not responding correctly.');
-                }
+                if (!response.ok) throw new Error('API server is not responding correctly.');
                 setupUploadListeners();
             } catch (error) {
                 console.error("API status check failed:", error);
