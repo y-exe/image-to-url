@@ -9,7 +9,7 @@
     <meta property="og:title" content="画像あぷろだ">
     <meta property="og:description" content="無料・高機能な画像アップローダー。">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://pic.yexe.xyz/">
+    <meta property="og:url" content="https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPOSITORY_NAME/">
     <meta property="og:site_name" content="画像あぷろだ">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,6 +30,19 @@
         .url-box{background-color:#f0f0f0;padding:10px 15px;border-radius:8px;display:flex;justify-content:space-between;align-items:center}.url-box input{flex-grow:1;border:none;background:none;font-size:1em;padding-right:10px}.copy-btn{padding:8px 15px;border:none;background-color:#333;color:white;border-radius:8px;cursor:pointer;transition:background-color .2s ease;flex-shrink:0}.copy-btn:hover{background-color:#555}
         .separator{display:flex;align-items:center;text-align:center;margin:30px 0;color:#ccc}.separator hr{flex-grow:1;border:none;border-top:1px solid #eee;margin:0}.separator span{padding:0 15px;font-size:.9em;font-weight:500;letter-spacing:.1em}.api-docs summary{display:block;list-style:none;border:2px solid #000;background-color:#000;color:#fff;border-radius:999px;padding:14px 20px;cursor:pointer;transition:opacity .2s ease;font-size:1em;font-weight:500}.api-docs summary:hover{opacity:.8}.api-docs summary::-webkit-details-marker{display:none}.api-docs>div{margin-top:20px;text-align:left}.api-docs pre{background-color:#2d2d2d;color:#ccc;padding:15px;border-radius:8px;white-space:pre-wrap;word-wrap:break-word;font-family:'Courier New',Courier,monospace}
         .mobile-only{display:inline}.desktop-only{display:none}
+
+        #upload-area.disabled {
+            background-color: #e9e9e9;
+            border-color: #ccc;
+            color: #999;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        #upload-area.disabled:hover {
+            background-color: #e9e9e9;
+            color: #999;
+        }
+
         @media (min-width: 500px){
             .mobile-only{display:none}
             .desktop-only{display:inline}
@@ -50,8 +63,8 @@
             画像を直画像のURLにすることができます。<br>児童ポルノ、グロ画像は禁止です。
         </p>
         <label for="file-input" id="upload-area" class="fade-in-up" style="--order: 2;">
-            <span class="mobile-only">アップロード</span>
-            <span class="desktop-only">クリック または ドラッグ＆ドロップ</span>
+            <span class="mobile-only" id="upload-text-mobile">アップロード</span>
+            <span class="desktop-only" id="upload-text-desktop">クリック または ドラッグ＆ドロップ</span>
         </label>
         <input type="file" id="file-input" accept="image/*">
         <div id="status"></div>
@@ -67,8 +80,9 @@
             <summary>APIドキュメント</summary>
             <div>
                 <p>このサービスは公開APIを提供しています。以下のエンドポイントに multipart/form-data 形式で画像をPOSTすることで利用できます。</p>
-                <h4>エンドポイント</h4><pre><code id="api-endpoint-display"></code></pre>
-                <h4>リクエスト (cURLの例)</h4><pre><code id="api-curl-display"></code></pre>
+                <h4>エンドポイント</h4><pre><code id="api-endpoint-display">POST http://localhost:3000/upload</code></pre>
+                <h4>リクエスト (cURLの例)</h4><pre><code id="api-curl-display">curl -X POST http://localhost:3000/upload \
+-F "image=@/path/to/image.jpg"</code></pre>
             </div>
         </details>
         
@@ -81,15 +95,26 @@
         const statusDiv = document.getElementById("status");
         const historyContainer = document.getElementById("history-container");
         const clearHistoryBtn = document.getElementById("clear-history-btn");
+        const uploadTextMobile = document.getElementById("upload-text-mobile");
+        const uploadTextDesktop = document.getElementById("upload-text-desktop");
 
         const API_BASE_URL = "https://i.yexe.xyz";
         
         const API_ENDPOINT = `${API_BASE_URL}/upload`;
         const HISTORY_KEY = "imageUploadHistory";
+        const MAX_FILE_SIZE = 8 * 1024 * 1024; 
 
         document.getElementById('api-endpoint-display').textContent = `POST ${API_ENDPOINT}`;
         document.getElementById('api-curl-display').textContent = `curl -X POST ${API_ENDPOINT} \\\n-F "image=@/path/to/image.jpg"`;
 
+        const formatBytes = (bytes, decimals = 2) => {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
 
         const renderHistory = () => {
             historyContainer.innerHTML = '';
@@ -108,49 +133,89 @@
                 historyContainer.appendChild(historyItem);
             });
         };
-        const handleFiles = async (files) => {
-            if (files.length === 0) return;
-            const file = files[0];
-            statusDiv.textContent = "アップロード中...";
+
+        const uploadFileWithProgress = (file) => {
             const formData = new FormData();
             formData.append("image", file);
-            try {
-                const response = await fetch(API_ENDPOINT, { method: "POST", body: formData });
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: 'サーバーからエラーが返されました' }));
-                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            
+            const xhr = new XMLHttpRequest();
+
+            xhr.upload.addEventListener("progress", (event) => {
+                if (event.lengthComputable) {
+                    const loaded = formatBytes(event.loaded);
+                    const total = formatBytes(event.total);
+                    statusDiv.textContent = `アップロード中... (${loaded} / ${total})`;
                 }
-                const data = await response.json();
-                if (!data.success) throw new Error(data.error || "不明なエラーが発生しました");
-                const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
-                history.push({ url: data.url, fileName: data.fileName });
-                localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-                statusDiv.textContent = "アップロード完了！";
-                renderHistory();
-            } catch (error) {
-                statusDiv.textContent = `エラー: ${error.message}`;
+            });
+
+            xhr.addEventListener("load", () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (!data.success) throw new Error(data.error || "不明なエラーが発生しました");
+
+                        const history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+                        history.push({ url: data.url, fileName: data.fileName });
+                        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+                        statusDiv.textContent = "アップロード完了！";
+                        renderHistory();
+                    } catch (error) {
+                         statusDiv.textContent = `エラー: レスポンスの解析に失敗しました。`;
+                    }
+                } else {
+                    try {
+                         const errorData = JSON.parse(xhr.responseText);
+                         statusDiv.textContent = `エラー: ${errorData.error || xhr.statusText}`;
+                    } catch {
+                         statusDiv.textContent = `エラー: ${xhr.status} ${xhr.statusText}`;
+                    }
+                }
+            });
+
+            xhr.addEventListener("error", () => {
+                statusDiv.textContent = "エラー: ネットワークエラーが発生しました。";
+            });
+
+            xhr.open("POST", API_ENDPOINT, true);
+            xhr.send(formData);
+        }
+
+        const handleFiles = (files) => {
+            if (files.length === 0) return;
+            const file = files[0];
+
+            if (file.size > MAX_FILE_SIZE) {
+                statusDiv.textContent = `エラー: ファイルサイズが${formatBytes(MAX_FILE_SIZE)}を超えています。`;
+                return;
             }
+
+            statusDiv.textContent = "アップロード準備中...";
+            uploadFileWithProgress(file);
         };
+
         const copyUrl = (elementId) => {
             const input = document.getElementById(elementId);
-            input.select();
-            input.setSelectionRange(0, 99999);
-            try {
+            if (navigator.clipboard) {
                 navigator.clipboard.writeText(input.value).then(() => {
                     statusDiv.textContent = "コピーしました！";
                 }, () => {
                     statusDiv.textContent = "コピーに失敗しました";
                 });
-            } catch (err) {
-                console.error("コピーに失敗しました", err);
-                statusDiv.textContent = "コピーに失敗しました";
+            } else {
+                input.select();
+                document.execCommand("copy");
+                statusDiv.textContent = "コピーしました！";
             }
         };
-        ["dragenter", "dragover", "dragleave", "drop"].forEach(eventName => {
-            uploadArea.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
-        });
-        uploadArea.addEventListener("drop", e => handleFiles(e.dataTransfer.files), false);
-        fileInput.addEventListener("change", e => handleFiles(e.target.files));
+
+        const setupUploadListeners = () => {
+            ["dragenter", "dragover", "dragleave", "drop"].forEach(eventName => {
+                uploadArea.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
+            });
+            uploadArea.addEventListener("drop", e => handleFiles(e.dataTransfer.files), false);
+            fileInput.addEventListener("change", e => handleFiles(e.target.files));
+        };
+
         clearHistoryBtn.addEventListener('click', () => {
             if (confirm('本当にすべての履歴を削除しますか？')) {
                 localStorage.removeItem(HISTORY_KEY);
@@ -158,7 +223,36 @@
                 renderHistory();
             }
         });
-        document.addEventListener('DOMContentLoaded', renderHistory);
+        
+        const disableUpload = () => {
+            uploadTextMobile.textContent = "エラー発生中";
+            uploadTextDesktop.textContent = "現在一時的に機能してません。";
+            uploadArea.classList.add("disabled");
+            fileInput.disabled = true;
+        };
+
+        const checkApiStatus = async () => {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(API_BASE_URL, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    throw new Error('API server is not responding correctly.');
+                }
+                setupUploadListeners();
+            } catch (error) {
+                console.error("API status check failed:", error);
+                disableUpload();
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderHistory();
+            checkApiStatus();
+        });
     </script>
 </body>
 </html>
