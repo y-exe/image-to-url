@@ -6,11 +6,6 @@
     <title>画像あぷろだ - 無料・高機能な画像アップローダー</title>
     
     <meta name="description" content="無料の画像アップローダー。画像をアップロードして恒久的なURLを簡単に生成・共有できます。">
-    <meta property="og:title" content="画像あぷろだ">
-    <meta property="og:description" content="無料・高機能な画像アップローダー。">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPOSITORY_NAME/">
-    <meta property="og:site_name" content="画像あぷろだ">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,23 +25,9 @@
         .url-box{background-color:#f0f0f0;padding:10px 15px;border-radius:8px;display:flex;justify-content:space-between;align-items:center}.url-box input{flex-grow:1;border:none;background:none;font-size:1em;padding-right:10px}.copy-btn{padding:8px 15px;border:none;background-color:#333;color:white;border-radius:8px;cursor:pointer;transition:background-color .2s ease;flex-shrink:0}.copy-btn:hover{background-color:#555}
         .separator{display:flex;align-items:center;text-align:center;margin:30px 0;color:#ccc}.separator hr{flex-grow:1;border:none;border-top:1px solid #eee;margin:0}.separator span{padding:0 15px;font-size:.9em;font-weight:500;letter-spacing:.1em}.api-docs summary{display:block;list-style:none;border:2px solid #000;background-color:#000;color:#fff;border-radius:999px;padding:14px 20px;cursor:pointer;transition:opacity .2s ease;font-size:1em;font-weight:500}.api-docs summary:hover{opacity:.8}.api-docs summary::-webkit-details-marker{display:none}.api-docs>div{margin-top:20px;text-align:left}.api-docs pre{background-color:#2d2d2d;color:#ccc;padding:15px;border-radius:8px;white-space:pre-wrap;word-wrap:break-word;font-family:'Courier New',Courier,monospace}
         .mobile-only{display:inline}.desktop-only{display:none}
-
-        #upload-area.disabled {
-            background-color: #e9e9e9;
-            border-color: #ccc;
-            color: #999;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-        #upload-area.disabled:hover {
-            background-color: #e9e9e9;
-            color: #999;
-        }
-
-        @media (min-width: 500px){
-            .mobile-only{display:none}
-            .desktop-only{display:inline}
-        }
+        #upload-area.disabled { background-color: #e9e9e9; border-color: #ccc; color: #999; cursor: not-allowed; pointer-events: none; }
+        #upload-area.disabled:hover { background-color: #e9e9e9; color: #999; }
+        @media (min-width: 500px){ .mobile-only{display:none} .desktop-only{display:inline} }
         @media (max-width: 500px) {
             body { background-color: #fff; padding: 0; }
             .container { box-shadow: none; border-radius: 0; padding: 30px 15px; min-height: 100vh; }
@@ -70,8 +51,7 @@
         <div id="status"></div>
         
         <div class="history-section fade-in-up" style="--order: 3;">
-            <div id="history-container">
-            </div>
+            <div id="history-container"></div>
             <button id="clear-history-btn">履歴をクリア</button>
         </div>
         
@@ -80,9 +60,8 @@
             <summary>APIドキュメント</summary>
             <div>
                 <p>このサービスは公開APIを提供しています。以下のエンドポイントに multipart/form-data 形式で画像をPOSTすることで利用できます。</p>
-                <h4>エンドポイント</h4><pre><code id="api-endpoint-display">POST http://localhost:3000/upload</code></pre>
-                <h4>リクエスト (cURLの例)</h4><pre><code id="api-curl-display">curl -X POST http://localhost:3000/upload \
--F "image=@/path/to/image.jpg"</code></pre>
+                <h4>エンドポイント</h4><pre><code id="api-endpoint-display"></code></pre>
+                <h4>リクエスト (cURLの例)</h4><pre><code id="api-curl-display"></code></pre>
             </div>
         </details>
         
@@ -103,6 +82,7 @@
         const API_ENDPOINT = `${API_BASE_URL}/upload`;
         const HISTORY_KEY = "imageUploadHistory";
         const MAX_FILE_SIZE = 8 * 1024 * 1024;
+
         document.getElementById('api-endpoint-display').textContent = `POST ${API_ENDPOINT}`;
         document.getElementById('api-curl-display').textContent = `curl -X POST ${API_ENDPOINT} \\\n-F "image=@/path/to/image.jpg"`;
 
@@ -194,14 +174,6 @@
             uploadArea.addEventListener("drop", e => handleFiles(e.dataTransfer.files), false);
             fileInput.addEventListener("change", e => handleFiles(e.target.files));
         };
-
-        clearHistoryBtn.addEventListener('click', () => {
-            if (confirm('本当にすべての履歴を削除しますか？')) {
-                localStorage.removeItem(HISTORY_KEY);
-                statusDiv.textContent = "履歴をクリアしました。";
-                renderHistory();
-            }
-        });
         
         const disableUpload = () => {
             uploadTextMobile.textContent = "エラー発生中";
@@ -212,17 +184,29 @@
 
         const checkApiStatus = async () => {
             try {
+                const healthCheckUrl = `${API_BASE_URL}/health`;
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
-                const response = await fetch(API_BASE_URL, { signal: controller.signal, mode: 'cors' });
+                const response = await fetch(healthCheckUrl, { signal: controller.signal });
                 clearTimeout(timeoutId);
-                if (!response.ok) throw new Error('API server is not responding correctly.');
+
+                if (!response.ok) {
+                    throw new Error(`API server is not responding correctly. Status: ${response.status}`);
+                }
                 setupUploadListeners();
             } catch (error) {
                 console.error("API status check failed:", error);
                 disableUpload();
             }
         };
+
+        clearHistoryBtn.addEventListener('click', () => {
+            if (confirm('本当にすべての履歴を削除しますか？')) {
+                localStorage.removeItem(HISTORY_KEY);
+                statusDiv.textContent = "履歴をクリアしました。";
+                renderHistory();
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', () => {
             renderHistory();
