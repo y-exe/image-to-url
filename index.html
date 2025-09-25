@@ -9,7 +9,7 @@
     <meta property="og:title" content="画像あぷろだ">
     <meta property="og:description" content="無料・高機能な画像アップローダー。">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPOSITORY_NAME/">
+    <meta property="og:url" content="https://pic.yexe.xyz/">
     <meta property="og:site_name" content="画像あぷろだ">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -67,9 +67,8 @@
             <summary>APIドキュメント</summary>
             <div>
                 <p>このサービスは公開APIを提供しています。以下のエンドポイントに multipart/form-data 形式で画像をPOSTすることで利用できます。</p>
-                <h4>エンドポイント</h4><pre><code id="api-endpoint-display">POST http://localhost:3000/upload</code></pre>
-                <h4>リクエスト (cURLの例)</h4><pre><code id="api-curl-display">curl -X POST http://localhost:3000/upload \
--F "image=@/path/to/image.jpg"</code></pre>
+                <h4>エンドポイント</h4><pre><code id="api-endpoint-display"></code></pre>
+                <h4>リクエスト (cURLの例)</h4><pre><code id="api-curl-display"></code></pre>
             </div>
         </details>
         
@@ -83,7 +82,7 @@
         const historyContainer = document.getElementById("history-container");
         const clearHistoryBtn = document.getElementById("clear-history-btn");
 
-        const API_BASE_URL = "http://i.yexe.xyz";
+        const API_BASE_URL = "https://i.yexe.xyz";
         
         const API_ENDPOINT = `${API_BASE_URL}/upload`;
         const HISTORY_KEY = "imageUploadHistory";
